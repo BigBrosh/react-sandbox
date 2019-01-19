@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import LiftingStateUp from './components/LiftingStateUp';
+import ReactRouter from './components/ReactRouter';
 
 class App extends Component {
   render() {
     return (
-      <LiftingStateUp />
+      <ReactRouter />
     );
   }
 }
