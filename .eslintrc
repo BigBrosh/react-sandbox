@@ -1,0 +1,9 @@
+{
+  "parser": "babel-eslint",
+  "rules": {
+    "quotes": [1, "single"],
+    "object-curly-spacing": [1, "always"],
+    "indent": [1, 2, { "SwitchCase": 1 }],
+    "semi": [1, "always"]
+  }
+}
