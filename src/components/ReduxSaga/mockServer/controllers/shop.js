@@ -18,11 +18,13 @@ const shop = [
 ];
 
 export const listItems = (req, res) => {
-  res.send(shop);
+  res.status(200).json({ shop });
 };
 
 export const getItem = (req, res) => {
   const { id } = req.params;
 
-  res.send(shop.find(item => item.id === Number(id)));
+  res.status(200).json({
+    item: shop.find(item => item.id === Number(id))
+  });
 };
