@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import ReactRouter from './components/ReactRouter';
+import VX from './components/VX';
 
 class App extends Component {
   render() {
     return (
-      <ReactRouter />
+      <VX />
     );
   }
 }
