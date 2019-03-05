@@ -235,124 +235,125 @@ class Area extends React.Component {
     });
 
     return (
-      <div>
-        <svg width={width} height={height} style={{ position: 'relative' }}>
-          <rect x={0} y={0} width={width} height={height} fill="#017bb9" rx={14}/>
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
-            </linearGradient>
-          </defs>
-          <GridRows
-            lineStyle={{ pointerEvents: 'none' }}
-            scale={yScale}
-            width={xMax}
-            strokeDasharray="2,2"
-            stroke="rgba(255,255,255,0.3)"
-          />
-          <GridColumns
-            lineStyle={{ pointerEvents: 'none' }}
-            scale={xScale}
-            height={yMax}
-            strokeDasharray="2,2"
-            stroke="rgba(255,255,255,0.3)"
-          />
-          <AreaClosed
-            data={res.participantsForDay}
-            x={d => xScale(xStock(d))}
-            y={d => yScale(yStock(d))}
-            yScale={yScale}
-            strokeWidth={1}
-            stroke={'url(#gradient)'}
-            fill={'url(#gradient)'}
-            curve={curveLinear}
-          />
-          <Bar
-            x={0}
-            y={0}
-            width={width}
-            height={height}
-            fill="transparent"
-            rx={14}
-            data={res.participantsForDay}
-            onTouchStart={event =>
-              this.handleTooltip({
-                event,
-                xStock,
-                xScale,
-                yScale,
-                data: res.participantsForDay
-              })
-            }
-            onTouchMove={event =>
-              this.handleTooltip({
-                event,
-                xStock,
-                xScale,
-                yScale,
-                data: res.participantsForDay
-              })
-            }
-            onMouseMove={event =>
-              this.handleTooltip({
-                event,
-                xStock,
-                xScale,
-                yScale,
-                data: res.participantsForDay
-              })
-            }
-            onMouseLeave={event => hideTooltip()}
-          />
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ position: 'relative' }}>
+          <svg width={width} height={height} style={{ position: 'relative' }}>
+            <rect x={0} y={0} width={width} height={height} fill="#017bb9" rx={14}/>
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
+              </linearGradient>
+            </defs>
+            <GridRows
+              lineStyle={{ pointerEvents: 'none' }}
+              scale={yScale}
+              width={xMax}
+              strokeDasharray="2,2"
+              stroke="rgba(255,255,255,0.3)"
+            />
+            <GridColumns
+              lineStyle={{ pointerEvents: 'none' }}
+              scale={xScale}
+              height={yMax}
+              strokeDasharray="2,2"
+              stroke="rgba(255,255,255,0.3)"
+            />
+            <AreaClosed
+              data={res.participantsForDay}
+              x={d => xScale(xStock(d))}
+              y={d => yScale(yStock(d))}
+              yScale={yScale}
+              strokeWidth={1}
+              stroke={'url(#gradient)'}
+              fill={'url(#gradient)'}
+              curve={curveLinear}
+            />
+            <Bar
+              x={0}
+              y={0}
+              width={width}
+              height={height}
+              fill="transparent"
+              rx={14}
+              data={res.participantsForDay}
+              onTouchStart={event =>
+                this.handleTooltip({
+                  event,
+                  xStock,
+                  xScale,
+                  yScale,
+                  data: res.participantsForDay
+                })
+              }
+              onTouchMove={event =>
+                this.handleTooltip({
+                  event,
+                  xStock,
+                  xScale,
+                  yScale,
+                  data: res.participantsForDay
+                })
+              }
+              onMouseMove={event =>
+                this.handleTooltip({
+                  event,
+                  xStock,
+                  xScale,
+                  yScale,
+                  data: res.participantsForDay
+                })
+              }
+              onMouseLeave={event => hideTooltip()}
+            />
+            {tooltipData && (
+              <g>
+                <Line
+                  from={{ x: tooltipLeft, y: 0 }}
+                  to={{ x: tooltipLeft, y: yMax }}
+                  stroke="rgba(92, 119, 235, 1.000)"
+                  strokeWidth={2}
+                  style={{ pointerEvents: 'none' }}
+                  strokeDasharray="2,2"
+                />
+                <circle
+                  cx={tooltipLeft}
+                  cy={tooltipTop + 1}
+                  r={4}
+                  fill="black"
+                  fillOpacity={0.1}
+                  stroke="black"
+                  strokeOpacity={0.1}
+                  strokeWidth={2}
+                  style={{ pointerEvents: 'none' }}
+                />
+                <circle
+                  cx={tooltipLeft}
+                  cy={tooltipTop}
+                  r={4}
+                  fill="rgba(92, 119, 235, 1.000)"
+                  stroke="white"
+                  strokeWidth={2}
+                  style={{ pointerEvents: 'none' }}
+                />
+              </g>
+            )}
+          </svg>
           {tooltipData && (
-            <g>
-              <Line
-                from={{ x: tooltipLeft, y: 0 }}
-                to={{ x: tooltipLeft, y: yMax }}
-                stroke="rgba(92, 119, 235, 1.000)"
-                strokeWidth={2}
-                style={{ pointerEvents: 'none' }}
-                strokeDasharray="2,2"
-              />
-              <circle
-                cx={tooltipLeft}
-                cy={tooltipTop + 1}
-                r={4}
-                fill="black"
-                fillOpacity={0.1}
-                stroke="black"
-                strokeOpacity={0.1}
-                strokeWidth={2}
-                style={{ pointerEvents: 'none' }}
-              />
-              <circle
-                cx={tooltipLeft}
-                cy={tooltipTop}
-                r={4}
-                fill="rgba(92, 119, 235, 1.000)"
-                stroke="white"
-                strokeWidth={2}
-                style={{ pointerEvents: 'none' }}
-              />
-            </g>
+            <Tooltip
+              style={{
+                position: 'absolute',
+                top: 30,
+                right: 30,
+                backgroundColor: 'rgba(92, 119, 235, 1.000)',
+                color: 'white',
+              }}
+            >
+              {`${yStock(tooltipData)}`}<br/>
+              {formatDate(xStock(tooltipData))}
+            </Tooltip>
           )}
-        </svg>
-        {tooltipData && (
-          <Tooltip
-            style={{
-              position: 'absolute',
-              top: 80,
-              right: 100,
-              backgroundColor: 'rgba(92, 119, 235, 1.000)',
-              color: 'white',
-              transform: 'translate(0, calc(-100% - 10px))'
-            }}
-          >
-            {`${yStock(tooltipData)}`}<br/>
-            {formatDate(xStock(tooltipData))}
-          </Tooltip>
-        )}
+        </div>
       </div>
     );
   }
