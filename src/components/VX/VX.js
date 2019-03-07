@@ -1,12 +1,14 @@
 import React from 'react';
 import { AreaClosed, Line, Bar } from '@vx/shape';
 import { curveLinear } from '@vx/curve';
+import { Group } from '@vx/group';
 import { GridRows, GridColumns } from '@vx/grid';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { withTooltip, Tooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 import { bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
+import { AxisLeft, AxisBottom } from '@vx/axis';
 
 const res = {
   start: 1381814054000,
@@ -175,10 +177,10 @@ class Area extends React.Component {
     height: 450,
     yOffsetBottom: 4,
     margin: {
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0
+      top: 10,
+      right: 20,
+      bottom: 30,
+      left: 40
     },
   };
 
@@ -224,122 +226,142 @@ class Area extends React.Component {
 
     // scales
     const xScale = scaleTime({
-      range: [0, xMax],
+      range: [margin.left, xMax + margin.right * 2],
       domain: extent(res.participantsForDay, xStock)
     });
 
     const yScale = scaleLinear({
       range: [yMax, 0],
-      domain: [0, max(res.participantsForDay, yStock) + yMax / 20],
+      domain: [0, max(res.participantsForDay, yStock) * 1.5],
       nice: true
     });
+
+    const isInsideChart = margin.left < tooltipLeft && tooltipLeft < xMax + margin.right * 2;
 
     return (
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div style={{ position: 'relative' }}>
-          <svg width={width} height={height} style={{ position: 'relative' }}>
-            <rect x={0} y={0} width={width} height={height} fill="#017bb9" rx={14}/>
+          <svg width={width} height={height + 100} style={{ position: 'relative' }}>
+            <rect x={margin.left} y={margin.top} width={xMax} height={yMax} fill="#017bb9"/>
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
                 <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
               </linearGradient>
             </defs>
-            <GridRows
-              lineStyle={{ pointerEvents: 'none' }}
-              scale={yScale}
-              width={xMax}
-              strokeDasharray="2,2"
-              stroke="rgba(255,255,255,0.3)"
-            />
-            <GridColumns
-              lineStyle={{ pointerEvents: 'none' }}
-              scale={xScale}
-              height={yMax}
-              strokeDasharray="2,2"
-              stroke="rgba(255,255,255,0.3)"
-            />
-            <AreaClosed
-              data={res.participantsForDay}
-              x={d => xScale(xStock(d))}
-              y={d => yScale(yStock(d))}
-              yScale={yScale}
-              strokeWidth={1}
-              stroke={'url(#gradient)'}
-              fill={'url(#gradient)'}
-              curve={curveLinear}
-            />
-            <Bar
-              x={0}
-              y={0}
-              width={width}
-              height={height}
-              fill="transparent"
-              rx={14}
-              data={res.participantsForDay}
-              onTouchStart={event =>
-                this.handleTooltip({
-                  event,
-                  xStock,
-                  xScale,
-                  yScale,
-                  data: res.participantsForDay
-                })
-              }
-              onTouchMove={event =>
-                this.handleTooltip({
-                  event,
-                  xStock,
-                  xScale,
-                  yScale,
-                  data: res.participantsForDay
-                })
-              }
-              onMouseMove={event =>
-                this.handleTooltip({
-                  event,
-                  xStock,
-                  xScale,
-                  yScale,
-                  data: res.participantsForDay
-                })
-              }
-              onMouseLeave={event => hideTooltip()}
-            />
-            {tooltipData && (
-              <g>
-                <Line
-                  from={{ x: tooltipLeft, y: 0 }}
-                  to={{ x: tooltipLeft, y: yMax }}
-                  stroke="rgba(92, 119, 235, 1.000)"
-                  strokeWidth={2}
-                  style={{ pointerEvents: 'none' }}
-                  strokeDasharray="2,2"
-                />
-                <circle
-                  cx={tooltipLeft}
-                  cy={tooltipTop + 1}
-                  r={4}
-                  fill="black"
-                  fillOpacity={0.1}
-                  stroke="black"
-                  strokeOpacity={0.1}
-                  strokeWidth={2}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <circle
-                  cx={tooltipLeft}
-                  cy={tooltipTop}
-                  r={4}
-                  fill="rgba(92, 119, 235, 1.000)"
-                  stroke="white"
-                  strokeWidth={2}
-                  style={{ pointerEvents: 'none' }}
-                />
-              </g>
-            )}
+            <Group top={margin.top}>
+              <GridRows
+                lineStyle={{ pointerEvents: 'none' }}
+                scale={yScale}
+                width={xMax + margin.right * 2}
+                strokeDasharray="2,2"
+                stroke="rgba(255,255,255,0.3)"
+              />
+              <GridColumns
+                lineStyle={{ pointerEvents: 'none' }}
+                scale={xScale}
+                height={yMax}
+                strokeDasharray="2,2"
+                stroke="rgba(255,255,255,0.3)"
+              />
+              <AreaClosed
+                data={res.participantsForDay}
+                x={d => xScale(xStock(d))}
+                y={d => yScale(yStock(d))}
+                yScale={yScale}
+                strokeWidth={1}
+                stroke={'url(#gradient)'}
+                fill={'url(#gradient)'}
+                curve={curveLinear}
+              />
+              <Bar
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+                fill="transparent"
+                rx={14}
+                data={res.participantsForDay}
+                onTouchStart={event =>
+                  this.handleTooltip({
+                    event,
+                    xStock,
+                    xScale,
+                    yScale,
+                    data: res.participantsForDay
+                  })
+                }
+                onTouchMove={event =>
+                  this.handleTooltip({
+                    event,
+                    xStock,
+                    xScale,
+                    yScale,
+                    data: res.participantsForDay
+                  })
+                }
+                onMouseMove={event =>
+                  this.handleTooltip({
+                    event,
+                    xStock,
+                    xScale,
+                    yScale,
+                    data: res.participantsForDay
+                  })
+                }
+                onMouseLeave={event => hideTooltip()}
+              />
+              <AxisLeft
+                scale={yScale}
+                numTicks={6}
+                top={0}
+                left={margin.left}
+                hideZero
+                label="Axis Left Label"
+              />
+              <AxisBottom
+                top={yMax}
+                scale={xScale}
+                numTicks={10}
+              />
+              {
+                tooltipData
+                && isInsideChart
+                && (
+                  <g>
+                    <Line
+                      from={{ x: tooltipLeft, y: margin.top }}
+                      to={{ x: tooltipLeft, y: yMax }}
+                      stroke="rgba(92, 119, 235, 1.000)"
+                      strokeWidth={2}
+                      style={{ pointerEvents: 'none' }}
+                      strokeDasharray="2,2"
+                    />
+                    <circle
+                      cx={tooltipLeft}
+                      cy={tooltipTop + 1}
+                      r={4}
+                      fill="black"
+                      fillOpacity={0.1}
+                      stroke="black"
+                      strokeOpacity={0.1}
+                      strokeWidth={2}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    <circle
+                      cx={tooltipLeft}
+                      cy={tooltipTop}
+                      r={4}
+                      fill="rgba(92, 119, 235, 1.000)"
+                      stroke="white"
+                      strokeWidth={2}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  </g>
+                )}
+            </Group>
           </svg>
-          {tooltipData && (
+          {tooltipData && isInsideChart && (
             <Tooltip
               style={{
                 position: 'absolute',
