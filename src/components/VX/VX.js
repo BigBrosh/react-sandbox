@@ -175,31 +175,75 @@ class Area extends React.Component {
   state = {
     width: 900,
     height: 450,
+    arrayForScale: [...res.participantsForDay, ...res.ticketsForDay],
+    dataForToolTip: {
+      chart1: res.participantsForDay,
+      chart2: res.ticketsForDay
+    },
     margin: {
       top: 10,
       right: 20,
       bottom: 30,
       left: 40
     },
+    chart1: true,
+    chart2: true
+  };
+
+  toggleChart = (id, isShown) => {
+    this.setState({
+      [`chart${id}`]: isShown
+    }, () => {
+      this.updateArrayForScale();
+    });
+  };
+
+  updateArrayForScale = () => {
+    const arrayForScale = [];
+
+    if (this.state.chart1) {
+      arrayForScale.push(res.participantsForDay);
+    }
+
+    if (this.state.chart2) {
+      arrayForScale.push(res.ticketsForDay);
+    }
+
+    this.setState({ arrayForScale });
   };
 
   handleTooltip = ({ event, data, xStock, xScale, yScale }) => {
     const { showTooltip } = this.props;
     const { x } = localPoint(event);
     const x0 = xScale.invert(x);
-    const index = bisectDate(data, x0, 1);
-    const d0 = data[index - 1];
-    const d1 = data[index];
 
-    let d = d0;
-    if (d1 && d1.x) {
-      d = x0 - xStock(d0) > xStock(d1) - x0 ? d1 : d0;
+    const index1 = bisectDate(data.chart1, x0, 1);
+    const d01 = data.chart1[index1 - 1];
+    const d11 = data.chart1[index1];
+
+    const index2 = bisectDate(data.chart2, x0, 1);
+    const d02 = data.chart2[index2 - 1];
+    const d12 = data.chart2[index2];
+
+    let d1 = d01;
+    let d2 = d02;
+
+    if (d11 && d11.x) {
+      d1 = x0 - xStock(d01) > xStock(d11) - x0 ? d11 : d01;
+    }
+
+    if (d12 && d12.x) {
+      d2 = x0 - xStock(d02) > xStock(d12) - x0 ? d12 : d02;
     }
 
     showTooltip({
-      tooltipData: d,
-      tooltipLeft: x,
-      tooltipTop: yScale(d.y)
+      tooltipData: {
+        d1,
+        d2,
+        tooltipTop1: yScale(d1.y),
+        tooltipTop2: yScale(d2.y),
+      },
+      tooltipLeft: x
     });
   };
 
@@ -207,13 +251,16 @@ class Area extends React.Component {
     const {
       width,
       height,
-      margin
+      margin,
+      arrayForScale,
+      chart1,
+      chart2,
+      dataForToolTip
     } = this.state;
 
     const {
       hideTooltip,
       tooltipData,
-      tooltipTop,
       tooltipLeft,
       events
     } = this.props;
@@ -226,12 +273,12 @@ class Area extends React.Component {
     // scales
     const xScale = scaleTime({
       range: [margin.left, xMax + margin.right * 2],
-      domain: extent(res.participantsForDay, xStock)
+      domain: extent(arrayForScale, xStock)
     });
 
     const yScale = scaleLinear({
       range: [yMax, 0],
-      domain: [0, max(res.participantsForDay, yStock) * 1.5],
+      domain: [0, max(arrayForScale, yStock) * 1.5],
       nice: true
     });
 
@@ -246,6 +293,10 @@ class Area extends React.Component {
               <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
                 <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
+              </linearGradient>
+              <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#000" stopOpacity={1}/>
+                <stop offset="100%" stopColor="#000" stopOpacity={0.2}/>
               </linearGradient>
             </defs>
             <Group top={margin.top}>
@@ -263,31 +314,48 @@ class Area extends React.Component {
                 strokeDasharray="2,2"
                 stroke="rgba(255,255,255,0.3)"
               />
-              <AreaClosed
-                data={res.participantsForDay}
-                x={d => xScale(xStock(d))}
-                y={d => yScale(yStock(d))}
-                yScale={yScale}
-                strokeWidth={1}
-                stroke={'url(#gradient)'}
-                fill={'url(#gradient)'}
-                curve={curveLinear}
-              />
+              {
+                chart1 && (
+                  <AreaClosed
+                    data={dataForToolTip.chart1}
+                    x={d => xScale(xStock(d))}
+                    y={d => yScale(yStock(d))}
+                    yScale={yScale}
+                    strokeWidth={1}
+                    stroke={'url(#gradient)'}
+                    fill={'url(#gradient)'}
+                    curve={curveLinear}
+                  />
+                )
+              }
+              {
+                chart2 && (
+                  <AreaClosed
+                    data={dataForToolTip.chart2}
+                    x={d => xScale(xStock(d))}
+                    y={d => yScale(yStock(d))}
+                    yScale={yScale}
+                    strokeWidth={1}
+                    stroke={'url(#gradient2)'}
+                    fill={'url(#gradient2)'}
+                    curve={curveLinear}
+                  />
+                )
+              }
               <Bar
-                x={0}
+                x={margin.left}
                 y={0}
-                width={width}
+                width={xMax}
                 height={height}
                 fill="transparent"
                 rx={14}
-                data={res.participantsForDay}
                 onTouchStart={event =>
                   this.handleTooltip({
                     event,
                     xStock,
                     xScale,
                     yScale,
-                    data: res.participantsForDay
+                    data: dataForToolTip
                   })
                 }
                 onTouchMove={event =>
@@ -296,7 +364,7 @@ class Area extends React.Component {
                     xStock,
                     xScale,
                     yScale,
-                    data: res.participantsForDay
+                    data: dataForToolTip
                   })
                 }
                 onMouseMove={event =>
@@ -305,7 +373,7 @@ class Area extends React.Component {
                     xStock,
                     xScale,
                     yScale,
-                    data: res.participantsForDay
+                    data: dataForToolTip
                   })
                 }
                 onMouseLeave={event => hideTooltip()}
@@ -338,7 +406,7 @@ class Area extends React.Component {
                     />
                     <circle
                       cx={tooltipLeft}
-                      cy={tooltipTop + 1}
+                      cy={tooltipData.tooltipTop1 + 1}
                       r={4}
                       fill="black"
                       fillOpacity={0.1}
@@ -349,7 +417,28 @@ class Area extends React.Component {
                     />
                     <circle
                       cx={tooltipLeft}
-                      cy={tooltipTop}
+                      cy={tooltipData.tooltipTop1}
+                      r={4}
+                      fill="rgba(92, 119, 235, 1.000)"
+                      stroke="white"
+                      strokeWidth={2}
+                      style={{ pointerEvents: 'none' }}
+                    />
+
+                    <circle
+                      cx={tooltipLeft}
+                      cy={tooltipData.tooltipTop2 + 1}
+                      r={4}
+                      fill="black"
+                      fillOpacity={0.1}
+                      stroke="black"
+                      strokeOpacity={0.1}
+                      strokeWidth={2}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    <circle
+                      cx={tooltipLeft}
+                      cy={tooltipData.tooltipTop2}
                       r={4}
                       fill="rgba(92, 119, 235, 1.000)"
                       stroke="white"
@@ -368,10 +457,12 @@ class Area extends React.Component {
                 right: margin.right + 10,
                 backgroundColor: 'rgba(92, 119, 235, 1.000)',
                 color: 'white',
+                textAlign: 'left'
               }}
             >
-              {`${yStock(tooltipData)}`}<br/>
-              {formatDate(xStock(tooltipData))}
+              {chart1 && `Registration started: ${yStock(tooltipData.d1)}`}<br/>
+              {chart2 && `Tickets sold: ${yStock(tooltipData.d2)}`}<br/>
+              {formatDate(xStock(tooltipData.d1))}
             </Tooltip>
           )}
         </div>
