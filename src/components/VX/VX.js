@@ -132,13 +132,13 @@ const res = {
     { x: 1385337600000, y: 0 },
     { x: 1385424000000, y: 0 },
     { x: 1385510400000, y: 0 },
-    { x: 1385596800000, y: 0 },
+    { x: 1385596800000, y: 25 },
     { x: 1385683200000, y: 0 },
-    { x: 1385769600000, y: 0 },
-    { x: 1385856000000, y: 0 },
-    { x: 1385942400000, y: 0 },
-    { x: 1386028800000, y: 0 },
-    { x: 1386115200000, y: 0 },
+    { x: 1385769600000, y: 40 },
+    { x: 1385856000000, y: 5 },
+    { x: 1385942400000, y: 3 },
+    { x: 1386028800000, y: 10 },
+    { x: 1386115200000, y: 12 },
     { x: 1386201600000, y: 0 },
     { x: 1386288000000, y: 0 },
     { x: 1386374400000, y: 0 },
@@ -175,7 +175,6 @@ class Area extends React.Component {
   state = {
     width: 900,
     height: 450,
-    yOffsetBottom: 4,
     margin: {
       top: 10,
       right: 20,
@@ -330,7 +329,7 @@ class Area extends React.Component {
                 && (
                   <g>
                     <Line
-                      from={{ x: tooltipLeft, y: margin.top }}
+                      from={{ x: tooltipLeft, y: 0 }}
                       to={{ x: tooltipLeft, y: yMax }}
                       stroke="rgba(92, 119, 235, 1.000)"
                       strokeWidth={2}
@@ -365,8 +364,8 @@ class Area extends React.Component {
             <Tooltip
               style={{
                 position: 'absolute',
-                top: 30,
-                right: 30,
+                top: margin.top + 10,
+                right: margin.right + 10,
                 backgroundColor: 'rgba(92, 119, 235, 1.000)',
                 color: 'white',
               }}
