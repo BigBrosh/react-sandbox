@@ -173,8 +173,10 @@ const bisectDate = bisector(d => new Date(d.x)).left;
 
 class Area extends React.Component {
   state = {
-    width: 900,
-    height: 450,
+    width: 200,
+    height: 200,
+    ticksY: 10,
+    ticksX: 10,
     arrayForScale: [...res.participantsForDay, ...res.ticketsForDay],
     dataForToolTip: {
       chart1: res.participantsForDay,
@@ -188,6 +190,34 @@ class Area extends React.Component {
     },
     chart1: true,
     chart2: true
+  };
+
+  componentDidMount() {
+    this.calculateSizes();
+    window.addEventListener('resize', this.calculateSizes);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.calculateSizes);
+  }
+
+  calculateSizes = () => {
+    const maxWidth = 900;
+    const innerWidth = this.wrap.clientWidth;
+    const width = innerWidth > maxWidth ? maxWidth : innerWidth;
+    let height;
+
+    if (innerWidth > 600) {
+      height = width / 2;
+    } else {
+      height = width * 0.9;
+    }
+
+    this.setState({
+      width, height,
+      ticksY: window.innerWidth > 600 ? 8 : 6,
+      ticksX: window.innerWidth > 600 ? 10 : 4
+    });
   };
 
   toggleChart = (id, isShown) => {
@@ -251,11 +281,14 @@ class Area extends React.Component {
     const {
       width,
       height,
+      ticksY,
+      ticksX,
       margin,
       arrayForScale,
       chart1,
       chart2,
-      dataForToolTip
+      dataForToolTip,
+      wrapId
     } = this.state;
 
     const {
@@ -285,9 +318,21 @@ class Area extends React.Component {
     const isInsideChart = margin.left < tooltipLeft && tooltipLeft < xMax + margin.right * 2;
 
     return (
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div style={{ position: 'relative' }}>
-          <svg width={width} height={height + 100} style={{ position: 'relative' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          width: '100%'
+        }}
+        ref={node => this.wrap = node}
+      >
+        <div
+          style={{ position: 'relative' }}
+        >
+          <svg
+            width={width} height={height}
+            style={{ position: 'relative' }}
+          >
             <rect x={margin.left} y={margin.top} width={xMax} height={yMax} fill="#017bb9"/>
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -380,7 +425,7 @@ class Area extends React.Component {
               />
               <AxisLeft
                 scale={yScale}
-                numTicks={6}
+                numTicks={ticksY}
                 top={0}
                 left={margin.left}
                 hideZero
@@ -389,7 +434,7 @@ class Area extends React.Component {
               <AxisBottom
                 top={yMax}
                 scale={xScale}
-                numTicks={10}
+                numTicks={ticksX}
               />
               {
                 tooltipData
@@ -404,47 +449,59 @@ class Area extends React.Component {
                       style={{ pointerEvents: 'none' }}
                       strokeDasharray="2,2"
                     />
-                    <circle
-                      cx={tooltipLeft}
-                      cy={tooltipData.tooltipTop1 + 1}
-                      r={4}
-                      fill="black"
-                      fillOpacity={0.1}
-                      stroke="black"
-                      strokeOpacity={0.1}
-                      strokeWidth={2}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    <circle
-                      cx={tooltipLeft}
-                      cy={tooltipData.tooltipTop1}
-                      r={4}
-                      fill="rgba(92, 119, 235, 1.000)"
-                      stroke="white"
-                      strokeWidth={2}
-                      style={{ pointerEvents: 'none' }}
-                    />
+                    {
+                      chart1 && (
+                        <>
+                          <circle
+                            cx={tooltipLeft}
+                            cy={tooltipData.tooltipTop1 + 1}
+                            r={4}
+                            fill="black"
+                            fillOpacity={0.1}
+                            stroke="black"
+                            strokeOpacity={0.1}
+                            strokeWidth={2}
+                            style={{ pointerEvents: 'none' }}
+                          />
+                          <circle
+                            cx={tooltipLeft}
+                            cy={tooltipData.tooltipTop1}
+                            r={4}
+                            fill="rgba(92, 119, 235, 1.000)"
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ pointerEvents: 'none' }}
+                          />
+                        </>
+                      )
+                    }
+                    {
+                      chart2 && (
+                        <>
+                          <circle
+                            cx={tooltipLeft}
+                            cy={tooltipData.tooltipTop2 + 1}
+                            r={4}
+                            fill="black"
+                            fillOpacity={0.1}
+                            stroke="black"
+                            strokeOpacity={0.1}
+                            strokeWidth={2}
+                            style={{ pointerEvents: 'none' }}
+                          />
 
-                    <circle
-                      cx={tooltipLeft}
-                      cy={tooltipData.tooltipTop2 + 1}
-                      r={4}
-                      fill="black"
-                      fillOpacity={0.1}
-                      stroke="black"
-                      strokeOpacity={0.1}
-                      strokeWidth={2}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    <circle
-                      cx={tooltipLeft}
-                      cy={tooltipData.tooltipTop2}
-                      r={4}
-                      fill="rgba(92, 119, 235, 1.000)"
-                      stroke="white"
-                      strokeWidth={2}
-                      style={{ pointerEvents: 'none' }}
-                    />
+                          <circle
+                            cx={tooltipLeft}
+                            cy={tooltipData.tooltipTop2}
+                            r={4}
+                            fill="rgba(92, 119, 235, 1.000)"
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ pointerEvents: 'none' }}
+                          />
+                        </>
+                      )
+                    }
                   </g>
                 )}
             </Group>
@@ -460,8 +517,8 @@ class Area extends React.Component {
                 textAlign: 'left'
               }}
             >
-              {chart1 && `Registration started: ${yStock(tooltipData.d1)}`}<br/>
-              {chart2 && `Tickets sold: ${yStock(tooltipData.d2)}`}<br/>
+              {chart1 && <p>Registration started: {yStock(tooltipData.d1)}</p>}
+              {chart2 && <p>Tickets sold: {yStock(tooltipData.d2)}</p>}
               {formatDate(xStock(tooltipData.d1))}
             </Tooltip>
           )}
