@@ -189,7 +189,9 @@ class Area extends React.Component {
       left: 40
     },
     chart1: true,
-    chart2: true
+    chart1Label: res.participantsLabel,
+    chart2: true,
+    chart2Label: res.ticketSoldLabel,
   };
 
   componentDidMount() {
@@ -220,23 +222,57 @@ class Area extends React.Component {
     });
   };
 
-  toggleChart = (id, isShown) => {
+  turnOnChart = (id) => {
     this.setState({
-      [`chart${id}`]: isShown
+      [`chart${id}`]: true
     }, () => {
       this.updateArrayForScale();
     });
+  };
+
+  turnOffChart = (id) => {
+    this.setState(({ chart1, chart2 }) => {
+      if (chart1 && chart2) {
+        return {
+          [`chart${id}`]: false
+        };
+      }
+    }, () => {
+      this.updateArrayForScale();
+    });
+  };
+
+  toggleChart = (id) => () => {
+    if (this.state[`chart${id}`]) {
+      this.turnOffChart(id);
+    } else {
+      this.turnOnChart(id);
+    }
+  };
+
+  renderControl = () => {
+    const {
+      chart1Label,
+      chart2Label
+    } = this.state;
+
+    return (
+      <div>
+        <button onClick={this.toggleChart(1)}>{chart1Label}</button>
+        <button onClick={this.toggleChart(2)}>{chart2Label}</button>
+      </div>
+    );
   };
 
   updateArrayForScale = () => {
     const arrayForScale = [];
 
     if (this.state.chart1) {
-      arrayForScale.push(res.participantsForDay);
+      arrayForScale.push(...res.participantsForDay);
     }
 
     if (this.state.chart2) {
-      arrayForScale.push(res.ticketsForDay);
+      arrayForScale.push(...res.ticketsForDay);
     }
 
     this.setState({ arrayForScale });
@@ -279,16 +315,13 @@ class Area extends React.Component {
 
   render() {
     const {
-      width,
-      height,
-      ticksY,
-      ticksX,
+      width, height,
+      ticksY, ticksX,
       margin,
       arrayForScale,
-      chart1,
-      chart2,
-      dataForToolTip,
-      wrapId
+      chart1, chart1Label,
+      chart2, chart2Label,
+      dataForToolTip
     } = this.state;
 
     const {
@@ -321,18 +354,14 @@ class Area extends React.Component {
       <div
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'center',
           width: '100%'
         }}
         ref={node => this.wrap = node}
       >
-        <div
-          style={{ position: 'relative' }}
-        >
-          <svg
-            width={width} height={height}
-            style={{ position: 'relative' }}
-          >
+        <div style={{ position: 'relative' }}>
+          <svg width={width} height={height}>
             <rect x={margin.left} y={margin.top} width={xMax} height={yMax} fill="#017bb9"/>
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -421,7 +450,7 @@ class Area extends React.Component {
                     data: dataForToolTip
                   })
                 }
-                onMouseLeave={event => hideTooltip()}
+                onMouseLeave={hideTooltip}
               />
               <AxisLeft
                 scale={yScale}
@@ -517,12 +546,13 @@ class Area extends React.Component {
                 textAlign: 'left'
               }}
             >
-              {chart1 && <p>Registration started: {yStock(tooltipData.d1)}</p>}
-              {chart2 && <p>Tickets sold: {yStock(tooltipData.d2)}</p>}
+              {chart1 && <p>{chart1Label}: {yStock(tooltipData.d1)}</p>}
+              {chart2 && <p>{chart2Label}: {yStock(tooltipData.d2)}</p>}
               {formatDate(xStock(tooltipData.d1))}
             </Tooltip>
           )}
         </div>
+        {this.renderControl()}
       </div>
     );
   }
