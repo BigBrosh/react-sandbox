@@ -424,8 +424,7 @@ class Area extends React.Component {
     const {
       hideTooltip,
       tooltipData,
-      tooltipLeft,
-      events
+      tooltipLeft
     } = this.props;
     if (width < 10) return null;
 
