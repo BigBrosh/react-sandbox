@@ -1,3 +1,4 @@
 import VX from './VX';
+import { withTooltip } from '@vx/tooltip';
 
-export default VX;
+export default withTooltip(VX);

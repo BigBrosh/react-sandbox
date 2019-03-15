@@ -657,4 +657,4 @@ class Area extends React.Component {
   }
 }
 
-export default withTooltip(Area);
+export default Area;
