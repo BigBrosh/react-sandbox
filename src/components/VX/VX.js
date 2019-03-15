@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { AreaClosed, Line, Bar } from '@vx/shape';
 import { curveLinear } from '@vx/curve';
 import { Group } from '@vx/group';
@@ -165,11 +165,28 @@ const formatDate = timeFormat('%m/%d/%Y');
 const min = (arr, fn) => Math.min(...arr.map(fn));
 const max = (arr, fn) => Math.max(...arr.map(fn));
 const extent = (arr, fn) => [min(arr, fn), max(arr, fn)];
+const calculateTotal = (array) => {
+  let sum = 0;
+
+  return array.map(item => {
+    sum += item.y;
+
+    return {
+      ...item,
+      y: sum
+    };
+  });
+};
 
 // accessors
 const xStock = d => new Date(d.x);
 const yStock = d => d.y;
 const bisectDate = bisector(d => new Date(d.x)).left;
+const basicArrayForScale = [...res.participantsForDay, ...res.ticketsForDay];
+
+const memo = {
+  arrayForScale: basicArrayForScale
+};
 
 class Area extends React.Component {
   state = {
@@ -177,7 +194,7 @@ class Area extends React.Component {
     height: 200,
     ticksY: 10,
     ticksX: 10,
-    arrayForScale: [...res.participantsForDay, ...res.ticketsForDay],
+    arrayForScale: basicArrayForScale,
     dataForToolTip: {
       chart1: res.participantsForDay,
       chart2: res.ticketsForDay
@@ -188,10 +205,11 @@ class Area extends React.Component {
       bottom: 30,
       left: 40
     },
+    showTotal: false,
     chart1: true,
     chart1Label: res.participantsLabel,
     chart2: true,
-    chart2Label: res.ticketSoldLabel,
+    chart2Label: res.ticketSoldLabel
   };
 
   componentDidMount() {
@@ -222,6 +240,14 @@ class Area extends React.Component {
     });
   };
 
+  memoize = (func, name) => {
+    if (!memo[name]) {
+      memo[name] = func();
+    }
+
+    return memo[name];
+  };
+
   turnOnChart = (id) => {
     this.setState({
       [`chart${id}`]: true
@@ -250,7 +276,17 @@ class Area extends React.Component {
     }
   };
 
-  renderControl = () => {
+  toggleShowTotal = (showTotal) => () => {
+    this.setState(
+      { showTotal },
+      () => {
+        this.updateArrayForScale();
+        this.updateDataForToolTip();
+      }
+    );
+  };
+
+  renderToggleChartButtons = () => {
     const {
       chart1Label,
       chart2Label
@@ -264,15 +300,76 @@ class Area extends React.Component {
     );
   };
 
-  updateArrayForScale = () => {
-    const arrayForScale = [];
+  renderToggleShowTotalButtons = () => (
+    <div>
+      <button onClick={this.toggleShowTotal(false)}>By day</button>
+      <button onClick={this.toggleShowTotal(true)}>Total</button>
+    </div>
+  );
 
-    if (this.state.chart1) {
-      arrayForScale.push(...res.participantsForDay);
+  renderControl = () => (
+    <Fragment>
+      {this.renderToggleChartButtons()}
+      {this.renderToggleShowTotalButtons()}
+    </Fragment>
+  );
+
+  updateDataForToolTip = () => {
+    let chart1;
+    let chart2;
+
+    if (this.state.showTotal) {
+      chart1 = this.memoize(
+        () => calculateTotal(res.participantsForDay),
+        'calculateChart1'
+      );
+
+      chart2 = this.memoize(
+        () => calculateTotal(res.ticketsForDay),
+        'calculateChart2'
+      );
+    } else {
+      chart1 = res.participantsForDay;
+      chart2 = res.ticketsForDay;
     }
 
-    if (this.state.chart2) {
-      arrayForScale.push(...res.ticketsForDay);
+    this.setState({
+      dataForToolTip: { chart1, chart2 }
+    });
+  };
+
+  updateArrayForScale = () => {
+    const { showTotal, chart1, chart2 } = this.state;
+    let arrayForScale = [];
+
+    if (showTotal) {
+      if (chart1 && chart2) {
+        arrayForScale = this.memoize(() => [
+          ...calculateTotal(res.participantsForDay),
+          ...calculateTotal(res.ticketsForDay)
+        ], 'totalArrayForScale');
+      } else {
+        arrayForScale = chart1 ?
+          this.memoize(
+            () => calculateTotal(res.participantsForDay),
+            'calculateChart1'
+          ) :
+          this.memoize(
+            () => calculateTotal(res.ticketsForDay),
+            'calculateChart2'
+          );
+      }
+    } else {
+      if (chart1 && chart2) {
+        arrayForScale = this.memoize(() => [
+          ...res.participantsForDay,
+          ...res.ticketsForDay
+        ], 'arrayForScale');
+      } else {
+        arrayForScale = chart1 ?
+          res.participantsForDay :
+          res.ticketsForDay;
+      }
     }
 
     this.setState({ arrayForScale });
@@ -351,207 +448,210 @@ class Area extends React.Component {
     const isInsideChart = margin.left < tooltipLeft && tooltipLeft < xMax + margin.right * 2;
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          width: '100%'
-        }}
-        ref={node => this.wrap = node}
-      >
-        <div style={{ position: 'relative' }}>
-          <svg width={width} height={height}>
-            <rect x={margin.left} y={margin.top} width={xMax} height={yMax} fill="#017bb9"/>
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
-                <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
-              </linearGradient>
-              <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#000" stopOpacity={1}/>
-                <stop offset="100%" stopColor="#000" stopOpacity={0.2}/>
-              </linearGradient>
-            </defs>
-            <Group top={margin.top}>
-              <GridRows
-                lineStyle={{ pointerEvents: 'none' }}
-                scale={yScale}
-                width={xMax + margin.right * 2}
-                strokeDasharray="2,2"
-                stroke="rgba(255,255,255,0.3)"
-              />
-              <GridColumns
-                lineStyle={{ pointerEvents: 'none' }}
-                scale={xScale}
-                height={yMax}
-                strokeDasharray="2,2"
-                stroke="rgba(255,255,255,0.3)"
-              />
-              {
-                chart1 && (
-                  <AreaClosed
-                    data={dataForToolTip.chart1}
-                    x={d => xScale(xStock(d))}
-                    y={d => yScale(yStock(d))}
-                    yScale={yScale}
-                    strokeWidth={1}
-                    stroke={'url(#gradient)'}
-                    fill={'url(#gradient)'}
-                    curve={curveLinear}
-                  />
-                )
-              }
-              {
-                chart2 && (
-                  <AreaClosed
-                    data={dataForToolTip.chart2}
-                    x={d => xScale(xStock(d))}
-                    y={d => yScale(yStock(d))}
-                    yScale={yScale}
-                    strokeWidth={1}
-                    stroke={'url(#gradient2)'}
-                    fill={'url(#gradient2)'}
-                    curve={curveLinear}
-                  />
-                )
-              }
-              <Bar
-                x={margin.left}
-                y={0}
-                width={xMax}
-                height={height}
-                fill="transparent"
-                rx={14}
-                onTouchStart={event =>
-                  this.handleTooltip({
-                    event,
-                    xStock,
-                    xScale,
-                    yScale,
-                    data: dataForToolTip
-                  })
-                }
-                onTouchMove={event =>
-                  this.handleTooltip({
-                    event,
-                    xStock,
-                    xScale,
-                    yScale,
-                    data: dataForToolTip
-                  })
-                }
-                onMouseMove={event =>
-                  this.handleTooltip({
-                    event,
-                    xStock,
-                    xScale,
-                    yScale,
-                    data: dataForToolTip
-                  })
-                }
-                onMouseLeave={hideTooltip}
-              />
-              <AxisLeft
-                scale={yScale}
-                numTicks={ticksY}
-                top={0}
-                left={margin.left}
-                hideZero
-                label="Axis Left Label"
-              />
-              <AxisBottom
-                top={yMax}
-                scale={xScale}
-                numTicks={ticksX}
-              />
-              {
-                tooltipData
-                && isInsideChart
-                && (
-                  <g>
-                    <Line
-                      from={{ x: tooltipLeft, y: 0 }}
-                      to={{ x: tooltipLeft, y: yMax }}
-                      stroke="rgba(92, 119, 235, 1.000)"
-                      strokeWidth={2}
-                      style={{ pointerEvents: 'none' }}
-                      strokeDasharray="2,2"
+      <div>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            width: '100%'
+          }}
+          ref={node => this.wrap = node}
+        >
+          <div style={{ position: 'relative' }}>
+            <svg width={width} height={height}>
+              <rect x={margin.left} y={margin.top} width={xMax} height={yMax} fill="#017bb9"/>
+              <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1}/>
+                  <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0.2}/>
+                </linearGradient>
+                <linearGradient id="gradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#000" stopOpacity={1}/>
+                  <stop offset="100%" stopColor="#000" stopOpacity={0.2}/>
+                </linearGradient>
+              </defs>
+              <Group top={margin.top}>
+                <GridRows
+                  lineStyle={{ pointerEvents: 'none' }}
+                  scale={yScale}
+                  width={xMax + margin.right * 2}
+                  strokeDasharray="2,2"
+                  stroke="rgba(255,255,255,0.3)"
+                />
+                <GridColumns
+                  lineStyle={{ pointerEvents: 'none' }}
+                  scale={xScale}
+                  height={yMax}
+                  strokeDasharray="2,2"
+                  stroke="rgba(255,255,255,0.3)"
+                />
+                {
+                  chart1 && (
+                    <AreaClosed
+                      data={dataForToolTip.chart1}
+                      x={d => xScale(xStock(d))}
+                      y={d => yScale(yStock(d))}
+                      yScale={yScale}
+                      strokeWidth={1}
+                      stroke={'url(#gradient)'}
+                      fill={'url(#gradient)'}
+                      curve={curveLinear}
                     />
-                    {
-                      chart1 && (
-                        <>
-                          <circle
-                            cx={tooltipLeft}
-                            cy={tooltipData.tooltipTop1 + 1}
-                            r={4}
-                            fill="black"
-                            fillOpacity={0.1}
-                            stroke="black"
-                            strokeOpacity={0.1}
-                            strokeWidth={2}
-                            style={{ pointerEvents: 'none' }}
-                          />
-                          <circle
-                            cx={tooltipLeft}
-                            cy={tooltipData.tooltipTop1}
-                            r={4}
-                            fill="rgba(92, 119, 235, 1.000)"
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ pointerEvents: 'none' }}
-                          />
-                        </>
-                      )
-                    }
-                    {
-                      chart2 && (
-                        <>
-                          <circle
-                            cx={tooltipLeft}
-                            cy={tooltipData.tooltipTop2 + 1}
-                            r={4}
-                            fill="black"
-                            fillOpacity={0.1}
-                            stroke="black"
-                            strokeOpacity={0.1}
-                            strokeWidth={2}
-                            style={{ pointerEvents: 'none' }}
-                          />
+                  )
+                }
+                {
+                  chart2 && (
+                    <AreaClosed
+                      data={dataForToolTip.chart2}
+                      x={d => xScale(xStock(d))}
+                      y={d => yScale(yStock(d))}
+                      yScale={yScale}
+                      strokeWidth={1}
+                      stroke={'url(#gradient2)'}
+                      fill={'url(#gradient2)'}
+                      curve={curveLinear}
+                    />
+                  )
+                }
+                <Bar
+                  x={margin.left}
+                  y={0}
+                  width={xMax}
+                  height={height}
+                  fill="transparent"
+                  rx={14}
+                  onTouchStart={event =>
+                    this.handleTooltip({
+                      event,
+                      xStock,
+                      xScale,
+                      yScale,
+                      data: dataForToolTip
+                    })
+                  }
+                  onTouchMove={event =>
+                    this.handleTooltip({
+                      event,
+                      xStock,
+                      xScale,
+                      yScale,
+                      data: dataForToolTip
+                    })
+                  }
+                  onMouseMove={event =>
+                    this.handleTooltip({
+                      event,
+                      xStock,
+                      xScale,
+                      yScale,
+                      data: dataForToolTip
+                    })
+                  }
+                  onMouseLeave={hideTooltip}
+                />
+                <AxisLeft
+                  scale={yScale}
+                  numTicks={ticksY}
+                  top={0}
+                  left={margin.left}
+                  hideZero
+                  label="Axis Left Label"
+                />
+                <AxisBottom
+                  top={yMax}
+                  scale={xScale}
+                  numTicks={ticksX}
+                />
+                {
+                  tooltipData
+                  && isInsideChart
+                  && (
+                    <g>
+                      <Line
+                        from={{ x: tooltipLeft, y: 0 }}
+                        to={{ x: tooltipLeft, y: yMax }}
+                        stroke="rgba(92, 119, 235, 1.000)"
+                        strokeWidth={2}
+                        style={{ pointerEvents: 'none' }}
+                        strokeDasharray="2,2"
+                      />
+                      {
+                        chart1 && (
+                          <>
+                            <circle
+                              cx={tooltipLeft}
+                              cy={tooltipData.tooltipTop1 + 1}
+                              r={4}
+                              fill="black"
+                              fillOpacity={0.1}
+                              stroke="black"
+                              strokeOpacity={0.1}
+                              strokeWidth={2}
+                              style={{ pointerEvents: 'none' }}
+                            />
+                            <circle
+                              cx={tooltipLeft}
+                              cy={tooltipData.tooltipTop1}
+                              r={4}
+                              fill="rgba(92, 119, 235, 1.000)"
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ pointerEvents: 'none' }}
+                            />
+                          </>
+                        )
+                      }
+                      {
+                        chart2 && (
+                          <>
+                            <circle
+                              cx={tooltipLeft}
+                              cy={tooltipData.tooltipTop2 + 1}
+                              r={4}
+                              fill="black"
+                              fillOpacity={0.1}
+                              stroke="black"
+                              strokeOpacity={0.1}
+                              strokeWidth={2}
+                              style={{ pointerEvents: 'none' }}
+                            />
 
-                          <circle
-                            cx={tooltipLeft}
-                            cy={tooltipData.tooltipTop2}
-                            r={4}
-                            fill="rgba(92, 119, 235, 1.000)"
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ pointerEvents: 'none' }}
-                          />
-                        </>
-                      )
-                    }
-                  </g>
-                )}
-            </Group>
-          </svg>
-          {tooltipData && isInsideChart && (
-            <Tooltip
-              style={{
-                position: 'absolute',
-                top: margin.top + 10,
-                right: margin.right + 10,
-                backgroundColor: 'rgba(92, 119, 235, 1.000)',
-                color: 'white',
-                textAlign: 'left'
-              }}
-            >
-              {chart1 && <p>{chart1Label}: {yStock(tooltipData.d1)}</p>}
-              {chart2 && <p>{chart2Label}: {yStock(tooltipData.d2)}</p>}
-              {formatDate(xStock(tooltipData.d1))}
-            </Tooltip>
-          )}
+                            <circle
+                              cx={tooltipLeft}
+                              cy={tooltipData.tooltipTop2}
+                              r={4}
+                              fill="rgba(92, 119, 235, 1.000)"
+                              stroke="white"
+                              strokeWidth={2}
+                              style={{ pointerEvents: 'none' }}
+                            />
+                          </>
+                        )
+                      }
+                    </g>
+                  )}
+              </Group>
+            </svg>
+            {tooltipData && isInsideChart && (
+              <Tooltip
+                style={{
+                  position: 'absolute',
+                  top: margin.top + 10,
+                  right: margin.right + 10,
+                  backgroundColor: 'rgba(92, 119, 235, 1.000)',
+                  color: 'white',
+                  textAlign: 'left'
+                }}
+              >
+                {chart1 && <p>{chart1Label}: {yStock(tooltipData.d1)}</p>}
+                {chart2 && <p>{chart2Label}: {yStock(tooltipData.d2)}</p>}
+                {formatDate(xStock(tooltipData.d1))}
+              </Tooltip>
+            )}
+          </div>
         </div>
+
         {this.renderControl()}
       </div>
     );
