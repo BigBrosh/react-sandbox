@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const BaseURL = 'http://localhost:4000';
+const baseURL = 'http://localhost:4000';
 
-const request = (method, url) => (params) =>
-  axios[method](`${BaseURL}${url}`, params);
+const request = (method, url, configs) => (params) =>
+  axios[method](`${baseURL}${url}`, params, configs);
 
 export const shop = {
-  listItems: request('get', '/shop/')
+  fetchItems: request('get', '/shop')
 };

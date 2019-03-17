@@ -1,17 +1,15 @@
-import React, { Component } from 'react';
-import { shop } from './api';
+import React from 'react';
+import { Provider } from 'react-redux';
 
-export default class extends Component {
-  async componentDidMount() {
-    const items = await shop.listItems();
-    console.log({ items });
-  }
+import { store } from './store';
+import Shop from './components/Shop';
 
-  render() {
-    return (
-      <div>
-        Redux saga
-      </div>
-    );
-  }
-}
+import './styles/main.sass';
+
+const ReduxSaga = () => (
+  <Provider store={store}>
+    <Shop />
+  </Provider>
+);
+
+export default ReduxSaga;

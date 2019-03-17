@@ -1,0 +1,2 @@
+export const TOGGLE_SIDEBAR = 'TOGGLE_SIDEBAR';
+export const ADD_TO_BASKET = 'ADD_TO_BASKET';
