@@ -12,7 +12,6 @@ import { AxisLeft, AxisBottom } from '@vx/axis';
 import { InlineDatePicker } from 'material-ui-pickers';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from 'material-ui-pickers';
-import { instanceOf } from 'prop-types';
 
 const res = {
   start: 1381814054000,
