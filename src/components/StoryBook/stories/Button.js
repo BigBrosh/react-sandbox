@@ -1,11 +1,10 @@
 import React from 'react';
-
 import { storiesOf } from '@storybook/react';
-import { withActions } from '@storybook/addon-actions';
 
-import Button from '../components/Button/';
+import Button from '../components/Button';
 
-storiesOf('Button', module)
-  .add('static', () => <Button/>)
-  .addDecorator(withActions('mouseover'))
-  .add('hovered', () => <Button/>);
+storiesOf('Button/Static', module)
+  .add('static main', () => <Button/>);
+
+storiesOf('Button/Hovered', module)
+  .add('hovered main', () => <Button isHovered />);

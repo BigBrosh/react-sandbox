@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 class Button extends Component {
   state = {
-    isHovered: false
+    isHovered: Boolean(this.props.isHovered)
   };
 
   hover = () => this.setState({ isHovered: true });
