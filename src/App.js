@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import Shop from './components/Shop';
+import VX from './components/VX';
 import './global.sass';
 
 class App extends Component {
   render() {
     return (
-      <Shop />
+      <VX />
     );
   }
 }

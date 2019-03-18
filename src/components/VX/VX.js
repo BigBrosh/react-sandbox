@@ -4,11 +4,14 @@ import { curveLinear } from '@vx/curve';
 import { Group } from '@vx/group';
 import { GridRows, GridColumns } from '@vx/grid';
 import { scaleTime, scaleLinear } from '@vx/scale';
-import { withTooltip, Tooltip } from '@vx/tooltip';
+import { Tooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 import { bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 import { AxisLeft, AxisBottom } from '@vx/axis';
+import { InlineDatePicker } from 'material-ui-pickers';
+import DateFnsUtils from '@date-io/date-fns';
+import { MuiPickersUtilsProvider } from 'material-ui-pickers';
 
 const res = {
   start: 1381814054000,
@@ -188,6 +191,16 @@ const memo = {
   arrayForScale: basicArrayForScale
 };
 
+const memoize = (func, name) => {
+  if (!memo[name]) {
+    memo[name] = func();
+  }
+
+  return memo[name];
+};
+
+const [minDate, maxDate] = extent(basicArrayForScale, xStock);
+
 class Area extends React.Component {
   state = {
     width: 200,
@@ -209,7 +222,9 @@ class Area extends React.Component {
     chart1: true,
     chart1Label: res.participantsLabel,
     chart2: true,
-    chart2Label: res.ticketSoldLabel
+    chart2Label: res.ticketSoldLabel,
+    dateMin: minDate,
+    dateMax: maxDate
   };
 
   componentDidMount() {
@@ -238,14 +253,6 @@ class Area extends React.Component {
       ticksY: window.innerWidth > 600 ? 8 : 6,
       ticksX: window.innerWidth > 600 ? 10 : 4
     });
-  };
-
-  memoize = (func, name) => {
-    if (!memo[name]) {
-      memo[name] = func();
-    }
-
-    return memo[name];
   };
 
   turnOnChart = (id) => {
@@ -286,6 +293,58 @@ class Area extends React.Component {
     );
   };
 
+  handleDateChange = (type) => (date) => {
+    this.setState({
+      [`date${type}`]: date
+    }, () => {
+      this.updateArrayForScale();
+      this.updateDataForToolTip();
+    });
+  };
+
+  renderDatePickerMin = () => {
+    return (
+      <InlineDatePicker
+        keyboard
+        clearable
+        margin='dense'
+        variant="outlined"
+        value={this.state.dateMin}
+        onChange={this.handleDateChange('Min')}
+        format='MM/dd/yyyy'
+        minDate={minDate}
+        maxDate={this.state.dateMax}
+        mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
+      />
+    );
+  };
+
+  renderDatePickerMax = () => {
+    return (
+      <InlineDatePicker
+        keyboard
+        clearable
+        margin='dense'
+        variant="outlined"
+        value={this.state.dateMax}
+        onChange={this.handleDateChange('Max')}
+        format='MM/dd/yyyy'
+        minDate={this.state.dateMin}
+        maxDate={maxDate}
+        mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
+      />
+    );
+  };
+
+  renderDatePickers = () => {
+    return (
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        {this.renderDatePickerMin()}
+        {this.renderDatePickerMax()}
+      </MuiPickersUtilsProvider>
+    );
+  };
+
   renderToggleChartButtons = () => {
     const {
       chart1Label,
@@ -311,26 +370,29 @@ class Area extends React.Component {
     <Fragment>
       {this.renderToggleChartButtons()}
       {this.renderToggleShowTotalButtons()}
+      {this.renderDatePickers()}
     </Fragment>
   );
 
   updateDataForToolTip = () => {
     let chart1;
     let chart2;
+    const participants = this.cutArrayByDateRestrictions(res.participantsForDay, 'participants');
+    const tickets = this.cutArrayByDateRestrictions(res.ticketsForDay, 'tickets');
 
     if (this.state.showTotal) {
-      chart1 = this.memoize(
-        () => calculateTotal(res.participantsForDay),
-        'calculateChart1'
+      chart1 = memoize(
+        () => calculateTotal(participants),
+        this.withDateRestrictions('calculateChart1')
       );
 
-      chart2 = this.memoize(
-        () => calculateTotal(res.ticketsForDay),
-        'calculateChart2'
+      chart2 = memoize(
+        () => calculateTotal(tickets),
+        this.withDateRestrictions('calculateChart2')
       );
     } else {
-      chart1 = res.participantsForDay;
-      chart2 = res.ticketsForDay;
+      chart1 = participants;
+      chart2 = tickets;
     }
 
     this.setState({
@@ -338,37 +400,54 @@ class Area extends React.Component {
     });
   };
 
+  cutArrayByDateRestrictions = (array, type) => {
+    const { dateMin, dateMax } = this.state;
+
+    return memoize(() => {
+      return array.filter(({ x }) => {
+        return x >= dateMin && x <= dateMax;
+      });
+    }, this.withDateRestrictions(`cuttingArray${type}`));
+  };
+
+  withDateRestrictions = (string) => {
+    const { dateMin, dateMax } = this.state;
+    return `${string} from: ${dateMin} to: ${dateMax}`;
+  };
+
   updateArrayForScale = () => {
-    const { showTotal, chart1, chart2 } = this.state;
     let arrayForScale = [];
+    const { showTotal, chart1, chart2 } = this.state;
+    const participants = this.cutArrayByDateRestrictions(res.participantsForDay, 'participants');
+    const tickets = this.cutArrayByDateRestrictions(res.ticketsForDay, 'tickets');
 
     if (showTotal) {
       if (chart1 && chart2) {
-        arrayForScale = this.memoize(() => [
-          ...calculateTotal(res.participantsForDay),
-          ...calculateTotal(res.ticketsForDay)
-        ], 'totalArrayForScale');
+        arrayForScale = memoize(() => [
+          ...calculateTotal(participants),
+          ...calculateTotal(tickets)
+        ], this.withDateRestrictions('totalArrayForScale'));
       } else {
         arrayForScale = chart1 ?
-          this.memoize(
-            () => calculateTotal(res.participantsForDay),
-            'calculateChart1'
+          memoize(
+            () => calculateTotal(participants),
+            this.withDateRestrictions('calculateChart1')
           ) :
-          this.memoize(
-            () => calculateTotal(res.ticketsForDay),
-            'calculateChart2'
+          memoize(
+            () => calculateTotal(tickets),
+            this.withDateRestrictions('calculateChart2')
           );
       }
     } else {
       if (chart1 && chart2) {
-        arrayForScale = this.memoize(() => [
-          ...res.participantsForDay,
-          ...res.ticketsForDay
-        ], 'arrayForScale');
+        arrayForScale = memoize(() => [
+          ...participants,
+          ...tickets
+        ], this.withDateRestrictions('arrayForScale'));
       } else {
         arrayForScale = chart1 ?
-          res.participantsForDay :
-          res.ticketsForDay;
+          participants :
+          tickets;
       }
     }
 
@@ -432,6 +511,7 @@ class Area extends React.Component {
     const xMax = width - margin.left - margin.right;
     const yMax = height - margin.top - margin.bottom;
 
+    console.log({ arrayForScale });
     // scales
     const xScale = scaleTime({
       range: [margin.left, xMax + margin.right * 2],
