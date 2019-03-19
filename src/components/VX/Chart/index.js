@@ -1,4 +1,4 @@
-import VX from './VX';
+import Chart from './Chart';
 import { compose } from 'recompose';
 
 import { withTooltip } from '@vx/tooltip';
@@ -9,4 +9,4 @@ const enhance = compose(
   withTooltip
 );
 
-export default enhance(VX);
+export default enhance(Chart);

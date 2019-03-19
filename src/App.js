@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import VX from './components/VX/chart';
+import VX from './components/VX/Chart';
 import './global.sass';
 
 class App extends Component {
