@@ -2,7 +2,7 @@ import VX from './VX';
 import { compose } from 'recompose';
 
 import { withTooltip } from '@vx/tooltip';
-import withPickerUtils from './HOC/withPickerUtils';
+import withPickerUtils from './components/HOC/withPickerUtils';
 
 const enhance = compose(
   withPickerUtils,
