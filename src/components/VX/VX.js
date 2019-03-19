@@ -9,9 +9,7 @@ import { localPoint } from '@vx/event';
 import { bisector } from 'd3-array';
 import { timeFormat } from 'd3-time-format';
 import { AxisLeft, AxisBottom } from '@vx/axis';
-import { InlineDatePicker } from 'material-ui-pickers';
-import DateFnsUtils from '@date-io/date-fns';
-import { MuiPickersUtilsProvider } from 'material-ui-pickers';
+import DatePicker from './DatePicker';
 
 const res = {
   start: 1381814054000,
@@ -321,44 +319,34 @@ class Area extends React.Component {
 
   renderDatePickerMin = () => {
     return (
-      <InlineDatePicker
-        keyboard
-        clearable
-        margin='dense'
-        variant="outlined"
+      <DatePicker
         value={this.state.dateMin}
-        onChange={this.handleDateChange('Min')}
-        format='MM/dd/yyyy'
+        handleChange={this.handleDateChange}
+        dateType='Min'
         minDate={minDate}
         maxDate={this.state.dateMax}
-        mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
       />
     );
   };
 
   renderDatePickerMax = () => {
     return (
-      <InlineDatePicker
-        keyboard
-        clearable
-        margin='dense'
-        variant="outlined"
+      <DatePicker
         value={this.state.dateMax}
-        onChange={this.handleDateChange('Max')}
-        format='MM/dd/yyyy'
+        handleChange={this.handleDateChange}
+        dateType='Max'
         minDate={this.state.dateMin}
         maxDate={maxDate}
-        mask={[/\d/, /\d/, '/', /\d/, /\d/, '/', /\d/, /\d/, /\d/, /\d/]}
       />
     );
   };
 
   renderDatePickers = () => {
     return (
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+      <div>
         {this.renderDatePickerMin()}
         {this.renderDatePickerMax()}
-      </MuiPickersUtilsProvider>
+      </div>
     );
   };
 
