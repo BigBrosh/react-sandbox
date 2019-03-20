@@ -45,7 +45,7 @@ class PieChart extends PureComponent {
         colors={colors}
         arc={arc}
         pie={pie}
-        i={i}
+        index={i}
       />
     ));
   };
