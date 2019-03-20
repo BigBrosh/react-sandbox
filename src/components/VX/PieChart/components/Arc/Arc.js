@@ -20,7 +20,7 @@ class Arc extends PureComponent {
               x={centroidX}
               y={centroidY}
               dy='.33em'
-              fontSize={9}
+              fontSize={10}
               textAnchor='middle'
             >
               {`${percent}%`}
