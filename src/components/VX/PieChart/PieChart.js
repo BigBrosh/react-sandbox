@@ -1,14 +1,15 @@
-import React, { Component } from 'react';
+import React, { Fragment, PureComponent } from 'react';
 import { Pie } from '@vx/shape';
 import { Group } from '@vx/group';
 import mockData from './mockData';
 import Legend from './components/Legend/Legend';
+import Arc from './components/Arc';
 
 const usage = d => d.value;
 const dataValues = Object.values(mockData);
 const colors = ['#26a69a', '#37699f', '#1976d2', '#0288d1', '#0097a7'];
 
-class PieChart extends Component {
+class PieChart extends PureComponent {
   state = {
     width: null,
     height: null,
@@ -37,6 +38,18 @@ class PieChart extends Component {
 
   getRadius = (innerWidth) => innerWidth > 600 ? 220 : 200;
 
+  renderPie = (pie) => {
+    return pie.arcs.map((arc, i) => (
+      <Arc
+        key={`${arc.data.label}-${i}`}
+        colors={colors}
+        arc={arc}
+        pie={pie}
+        i={i}
+      />
+    ));
+  };
+
   render() {
     const { width, height, radius } = this.state;
     const centerY = height / 2;
@@ -45,46 +58,28 @@ class PieChart extends Component {
     return (
       <div ref={node => this.wrap = node} className='pieChart'>
         <svg width={width} height={height}>
-          <rect width={width} height={height} fill='transparent'/>
-          <Group top={centerY} left={centerX}>
-            <Pie
-              data={dataValues}
-              pieValue={usage}
-              outerRadius={radius - 80}
-              innerRadius={radius - 120}
-              cornerRadius={3}
-              padAngle={0}
-            >
-              {pie => {
-                return pie.arcs.map((arc, i) => {
-                  const [centroidX, centroidY] = pie.path.centroid(arc);
-                  const { startAngle, endAngle } = arc;
-                  const hasSpaceForLabel = endAngle - startAngle >= 0.1;
-                  const percent = Math.round((Math.abs(endAngle - startAngle) / (Math.PI * 2)) * 100);
-
-                  return (
-                    <g key={`${arc.data.label}-${i}`} className='part'>
-                      <path d={pie.path(arc)} fill={colors[i]}/>
-                      {hasSpaceForLabel && (
-                        <text
-                          fill='#fff'
-                          x={centroidX}
-                          y={centroidY}
-                          dy='.33em'
-                          fontSize={9}
-                          textAnchor='middle'
-                        >
-                          {`${percent}%`}
-                        </text>
-                      )}
-                    </g>
-                  );
-                });
-              }}
-            </Pie>
-          </Group>
+          {
+            width && height && (
+              <Fragment>
+                <rect width={width} height={height} fill='transparent'/>
+                <Group top={centerY} left={centerX}>
+                  <Pie
+                    data={dataValues}
+                    pieValue={usage}
+                    outerRadius={radius - 80}
+                    innerRadius={radius - 120}
+                    cornerRadius={3}
+                    padAngle={0}
+                  >
+                    {this.renderPie}
+                  </Pie>
+                </Group>
+              </Fragment>
+            )
+          }
         </svg>
-        <Legend items={dataValues} colors={colors} />
+
+        <Legend items={dataValues} colors={colors}/>
       </div>
     );
   }
