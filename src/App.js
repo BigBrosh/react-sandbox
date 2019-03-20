@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import VX from './components/VX/Chart';
+import PieChart from './components/VX/PieChart';
 import './global.sass';
+import './components/VX/PieChart/styles/main.sass';
 
 class App extends Component {
   render() {
     return (
-      <VX />
+      <PieChart />
     );
   }
 }
