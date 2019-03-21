@@ -4,6 +4,7 @@ import { Group } from '@vx/group';
 import mockData from './mockData';
 import Legend from './components/Legend/Legend';
 import Arc from './components/Arc';
+import './styles/main.sass';
 
 const usage = d => d.value;
 const dataValues = Object.values(mockData);
