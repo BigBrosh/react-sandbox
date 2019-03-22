@@ -1,12 +1,11 @@
 import React, { Component } from 'react';
-import PieChart from './components/VX/PieChart';
+import GoogleMap from './components/GoogleMap';
 import './global.sass';
-import './components/VX/PieChart/styles/main.sass';
 
 class App extends Component {
   render() {
     return (
-      <PieChart />
+      <GoogleMap />
     );
   }
 }
