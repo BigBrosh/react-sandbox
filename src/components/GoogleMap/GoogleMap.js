@@ -4,6 +4,7 @@ import { Map, Marker } from 'google-maps-react';
 import supercluster from 'points-cluster';
 import wrapStyles from './styles/mapWrap';
 import mapStyles from './styles/map';
+import clusterIcon from './img/clusterIcon.svg';
 
 const memo = {};
 
@@ -86,8 +87,15 @@ class GoogleMap extends PureComponent {
         return (
           <Marker
             key={`cluster_${i}`}
-            label={String(numPoints)}
+            label={{
+              color: '#fff',
+              text: String(numPoints)
+            }}
             position={{ lat: y, lng: x }}
+            style={{ color: '#fff' }}
+            icon={{
+              url: clusterIcon
+            }}
           />
         );
       }
