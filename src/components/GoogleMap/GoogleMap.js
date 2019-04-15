@@ -130,6 +130,4 @@ class GoogleMap extends PureComponent {
   }
 }
 
-// TODO: add memoization
-
 export default GoogleMap;
