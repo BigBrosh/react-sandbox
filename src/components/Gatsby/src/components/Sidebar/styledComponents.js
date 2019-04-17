@@ -1,27 +1,35 @@
 import styled from 'styled-components';
 import colors from '../../constants/colors';
 
-export const Sidebar = styled.section`
+export const Sidebar = styled.aside`
   position: fixed;
   left: 0;
   width: 20%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
   padding: 1em;
   background-color: ${colors.second};
+`;
+
+export const NavList = styled.ul`
+  margin: 0;
+  display: flex;
+  flex-direction: column;
   color: ${colors.textMain};
 `;
 
-export const navItem = `
+export const NavItem = styled.li`
   display: flex;
   align-items: center;
   margin: 0 0 0 1em;
   padding: 0.5em 0;
   border-bottom: 0.05em solid ${colors.main50};
   position: relative;
-  color: ${colors.textBody};
-  text-decoration: none;
+  
+  & a {
+    color: ${colors.textBody};
+    text-decoration: none;
+    width: 100%;
+  }
 
   &:before {
     content: '';

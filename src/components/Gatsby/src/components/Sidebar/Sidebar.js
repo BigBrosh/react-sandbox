@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, StaticQuery, graphql } from 'gatsby';
-import { navItem, Sidebar } from './styledComponents';
+import { NavItem, NavList, Sidebar } from './styledComponents';
 
 export default () => (
   <StaticQuery
@@ -18,15 +18,17 @@ export default () => (
     `}
     render={({ allSitePage: { edges } }) => (
       <Sidebar>
-        {edges.map(({ node: { id, path } }) => (
-          <Link
-            to={path}
-            key={id}
-            css={navItem}
-          >
-            {path}
-          </Link>
-        ))}
+        <nav>
+          <NavList>
+            {edges.map(({ node: { id, path } }) => (
+              <NavItem key={id}>
+                <Link to={path}>
+                  {path}
+                </Link>
+              </NavItem>
+            ))}
+          </NavList>
+        </nav>
       </Sidebar>
     )}
   />
