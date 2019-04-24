@@ -1,10 +1,11 @@
 import styled from 'styled-components';
 import colors from '../../constants/colors';
+import style from '../../constants/style';
 
 export const Sidebar = styled.aside`
   position: fixed;
   left: 0;
-  width: 20%;
+  width: ${style.asideWidth};
   height: 100%;
   padding: 1em;
   background-color: ${colors.second};
