@@ -1,6 +1,6 @@
 const style = {
-  asideWidth: '20%',
-  contentWrapWidth: '80%'
+  asideWidth: '200px',
+  contentWrapWidth: 'calc(100% - 200px)'
 };
 
 export default style;
