@@ -6,24 +6,24 @@ export default () => (
   <StaticQuery
     query={graphql`
       {
-        allSitePage {
+        allContentfulAuthor {
           edges {
             node {
               id
-              path
+              name
             }
           }
         }
       }
     `}
-    render={({ allSitePage: { edges } }) => (
+    render={({ allContentfulAuthor: { edges } }) => (
       <Sidebar>
         <nav>
           <NavList>
-            {edges.map(({ node: { id, path } }) => (
-              <NavItem key={id}>
-                <Link to={path}>
-                  {path}
+            {edges.map(({ node }) => (
+              <NavItem key={node.id}>
+                <Link to={`/${node.name.replace(' ', '')}`}>
+                  {node.name}
                 </Link>
               </NavItem>
             ))}
