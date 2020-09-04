@@ -32,7 +32,7 @@
     "google-maps-react": "^2.0.2",
     "history": "^4.7.2",
     "material-ui-pickers": "^2.2.4",
-    "node-sass": "^4.11.0",
+    "node-sass": "^4.13.1",
     "nodemon": "^1.18.9",
     "points-cluster": "^0.1.4",
     "react": "^16.7.0",
